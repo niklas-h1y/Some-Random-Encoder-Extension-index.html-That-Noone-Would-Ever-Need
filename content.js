@@ -2,7 +2,7 @@
   const encodeRules = [
     [/watch/gi,'ƿætч'],[/changes/gi,'чanʒes'],[/changed/gi,'чanʒeΔ'],[/shouting/gi,'ƩøυtIŋ'],
     [/thoroughfare/gi,'þørøυghfare'],[/through/gi,'þrøυgh'],[/whether/gi,'ƿheðer'],
-    [/shall/gi,'ʃall'],[/ship/gi,'ʃIp'],[/the /gi,'ðe '],[/the\\b/gi,'ðe'],
+    [/shall/gi,'ʃall'],[/ship/gi,'ʃIp'],[/the /gi,'ðe '],[/the\b/gi,'ðe'],
     [/ king/gi,' kIŋ'],[/queen/gi,'qυeen'],[/and/gi,'anΔ'],[/vision/gi,'vIzøn'],
     [/w/g,'ƿ'],[/W/g,'Ƿ'],[/d/g,'Δ'],[/m/g,'ɱ'],[/g/g,'ʒ'],[/h/g,'ч'],
     [/o/g,'ø'],[/O/g,'Ø'],[/a/g,'υ'],[/i/g,'I'],[/u/g,'υ'],[/A/g,'Æ'],[/s/g,'s']
