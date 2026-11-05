@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Sound / Script",
+  "version": "1.0.0",
+  "description": "Encode and decode text with the Sound / Script phonetic character system.",
+  "action": {
+    "default_title": "Sound / Script",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["contextMenus", "activeTab"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
