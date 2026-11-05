@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Sound / Script",
-  "version": "1.1.0",
+  "name": "Some-Random-Encoder-Extension-index.html-That-Noone-Would-Ever-Need",
+  "version": "1.1.1",
   "description": "Turn the current webpage into Sound / Script with one click. Refresh to undo.",
   "action": {
     "default_title": "Encode this page",
