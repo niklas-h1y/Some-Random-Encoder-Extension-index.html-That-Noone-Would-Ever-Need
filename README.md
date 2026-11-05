@@ -1,18 +1,18 @@
 # Sound / Script
 
-A Manifest V3 Chrome/Chromium extension based on the original `index.html` encoder.
+A Manifest V3 Chrome/Chromium joke extension based on the original `index.html` encoder.
 
 ## Install locally
 1. Download or clone this repository.
 2. Open `chrome://extensions` in Chrome (or the equivalent extensions page in your Chromium browser).
 3. Turn on **Developer mode**.
 4. Choose **Load unpacked** and select this repository folder.
-5. Click the Sound / Script toolbar icon to open the encoder.
+5. Click the Sound / Script toolbar icon, then press **Encode this page**.
 
-## Features
-- Encode and decode text in the extension popup.
-- Live character and word counts.
-- Copy converted output.
-- Right-click selected text on a webpage to encode or decode it. Editable fields are replaced in place; otherwise the converted result is copied to the clipboard.
+## How it works
+- One click encodes visible text across the current webpage in place.
+- There is deliberately no decode button. Refresh the page to restore its original text.
+- Scripts, styles, form controls, buttons, and editable areas are left alone.
+- The popup reports when the page has already been encoded.
 
 The standalone page remains available as `index.html`.
