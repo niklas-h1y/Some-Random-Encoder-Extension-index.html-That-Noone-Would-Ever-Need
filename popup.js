@@ -9,8 +9,8 @@ button.addEventListener('click', async () => {
     if (!tab?.id) throw new Error('No active tab');
     const result = await chrome.tabs.sendMessage(tab.id, { type: 'encode-page' });
     status.textContent = result?.alreadyEncoded
-      ? 'Already encoded. Refresh to reset.'
-      : 'Page encoded. Refresh to decode!';
+      ? 'Already encoded. Refresh to restore the original.'
+      : 'Page encoded. Refresh to restore the original!';
     button.textContent = result?.alreadyEncoded ? 'Already encoded ✓' : 'Encoded ✓';
   } catch {
     status.textContent = 'This page cannot be changed (try a regular website).';
