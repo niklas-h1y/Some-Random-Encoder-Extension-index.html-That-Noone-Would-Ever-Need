@@ -2,7 +2,6 @@
   // These rules intentionally mirror the phoneticRules array in index.html,
   // in the same order, so page encoding produces the same Sound / Script.
   const phoneticRules = [
-    // Structural digraphs & blends
     { pattern: /watch/gi, replace: 'ƿætч' },
     { pattern: /changes/gi, replace: 'чanʒes' },
     { pattern: /changed/gi, replace: 'чanʒeΔ' },
@@ -10,8 +9,6 @@
     { pattern: /thoroughfare/gi, replace: 'þørøυghfare' },
     { pattern: /through/gi, replace: 'þrøυgh' },
     { pattern: /whether/gi, replace: 'ƿheðer' },
-
-    // Consonants and special words
     { pattern: /shall/gi, replace: 'ʃall' },
     { pattern: /ship/gi, replace: 'ʃIp' },
     { pattern: /the /gi, replace: 'ðe ' },
@@ -20,8 +17,6 @@
     { pattern: /queen/gi, replace: 'qυeen' },
     { pattern: /and/gi, replace: 'anΔ' },
     { pattern: /vision/gi, replace: 'vIzøn' },
-
-    // Character substitutions (including the original no-op rules)
     { pattern: /w/g, replace: 'ƿ' },
     { pattern: /W/g, replace: 'Ƿ' },
     { pattern: /d/g, replace: 'Δ' },
@@ -42,11 +37,63 @@
   const convert = text => phoneticRules.reduce(
     (value, rule) => value.replace(rule.pattern, rule.replace), text
   );
-
-  // A page is encoded at most once per document. The DOM marker also guards
-  // against this content script being initialized more than once.
   const pageMarker = 'data-sound-script-encoded';
   const encodedGlyphs = /[ƿǷΔɱʒчøØυÆƩþðʃŋ]/u;
+  const excluded = 'script,style,noscript,textarea,input,select,option,button,[contenteditable],[aria-hidden="true"]';
+
+  function shouldSkip(node) {
+    const parent = node.parentElement;
+    const value = node.nodeValue || '';
+    if (!parent || !value.trim() || parent.closest(excluded) || encodedGlyphs.test(value)) return true;
+
+    for (let element = parent; element && element !== document.documentElement; element = element.parentElement) {
+      const style = getComputedStyle(element);
+      if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return true;
+    }
+    return false;
+  }
+
+  function encodeTextNode(node) {
+    if (node?.nodeType !== Node.TEXT_NODE || shouldSkip(node)) return false;
+    const before = node.nodeValue;
+    const after = convert(before);
+    if (after === before) return false;
+    node.nodeValue = after;
+    return true;
+  }
+
+  function encodeSubtree(root) {
+    if (!root) return 0;
+    if (root.nodeType === Node.TEXT_NODE) return encodeTextNode(root) ? 1 : 0;
+    if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) return 0;
+    if (root.nodeType === Node.ELEMENT_NODE && (root.matches(excluded) || root.closest(excluded))) return 0;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let changed = 0;
+    let textNode;
+    while ((textNode = walker.nextNode())) {
+      if (encodeTextNode(textNode)) changed++;
+    }
+    return changed;
+  }
+
+  let observerStarted = false;
+  function watchForNewText(root) {
+    if (observerStarted) return;
+    observerStarted = true;
+
+    // Keep newly inserted or dynamically updated page text encoded until refresh.
+    const observer = new MutationObserver(records => {
+      for (const record of records) {
+        if (record.type === 'characterData') {
+          encodeTextNode(record.target);
+        } else {
+          for (const addedNode of record.addedNodes) encodeSubtree(addedNode);
+        }
+      }
+    });
+    observer.observe(root, { subtree: true, childList: true, characterData: true });
+  }
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type !== 'encode-page') return;
@@ -62,40 +109,9 @@
       return;
     }
 
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    const nodes = [];
-    let node;
-
-    while ((node = walker.nextNode())) {
-      const parent = node.parentElement;
-      const value = node.nodeValue || '';
-      if (!parent || !value.trim()) continue;
-
-      // Don't alter code, controls, editable regions, or explicitly hidden text.
-      if (parent.closest('script,style,noscript,textarea,input,select,option,button,[contenteditable],[aria-hidden="true"]')) continue;
-
-      let hidden = false;
-      for (let element = parent; element && element !== document.documentElement; element = element.parentElement) {
-        const style = getComputedStyle(element);
-        if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') {
-          hidden = true;
-          break;
-        }
-      }
-      if (hidden) continue;
-
-      // Preserve text that already contains this script's distinctive glyphs.
-      // This avoids mangling pre-encoded snippets mixed into ordinary webpages.
-      if (encodedGlyphs.test(value)) continue;
-
-      nodes.push(node);
-    }
-
-    for (const textNode of nodes) {
-      textNode.nodeValue = convert(textNode.nodeValue);
-    }
-
+    const changedNodes = encodeSubtree(root);
     document.documentElement?.setAttribute(pageMarker, 'true');
-    sendResponse({ ok: true, changedNodes: nodes.length });
+    watchForNewText(root);
+    sendResponse({ ok: true, changedNodes, continuous: true });
   });
 })();
